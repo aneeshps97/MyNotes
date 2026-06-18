@@ -1,0 +1,8 @@
+views:
+  - type: table
+    name: Table
+  - type: table
+    name: View
+    filters:
+      and:
+        - file.folder == "DockerNotes"

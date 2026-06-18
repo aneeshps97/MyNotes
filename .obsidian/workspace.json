@@ -1,0 +1,237 @@
+{
+  "main": {
+    "id": "ce43a21c7955a7b7",
+    "type": "split",
+    "children": [
+      {
+        "id": "b6a4d20a2c942d57",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "dd0ac848eed03b33",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Gateway routing and crosscutting concerns in microservices"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "2abd28bb6074d3d2",
+    "type": "split",
+    "children": [
+      {
+        "id": "82bf47274d8a34d2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6e3f1e92cdd96572",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "496d24a6c8cdd56f",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "05a36bc58c93b4b5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 293.5
+  },
+  "right": {
+    "id": "5655ea1617fa689c",
+    "type": "split",
+    "children": [
+      {
+        "id": "964fceabe31e0c05",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "93eaadfe86aeafaa",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "DockerNotes/How to use mysql DB for microservices.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for How to use mysql DB for microservices"
+            }
+          },
+          {
+            "id": "8473f7abfe1198af",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "DockerNotes/docker commands1.png",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from docker commands1"
+            }
+          },
+          {
+            "id": "1dff08c543db522d",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "c75c18cc3980e327",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "c7f86653116bc60b",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "DockerNotes/docker commands1.png",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of docker commands1"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "dd0ac848eed03b33",
+  "lastOpenFiles": [
+    "DockerNotes/index.base",
+    "springboot notes/mapper class.md",
+    "roadmap.md",
+    "Untitled 2.base",
+    "Untitled 4.base",
+    "Untitled 3.base",
+    "Untitled 1.base",
+    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
+    "Rhino riding app/Defining basic features.md",
+    "Rhino riding app/Design plan.md",
+    "Rhino riding app/updated code flow.md",
+    "Rhino riding app/Rhino_Project_Workflow.md",
+    "Rhino riding app/Entity relationship.md",
+    "Rhino riding app/Database design.md",
+    "DockerNotes/Service discovery and service registration.md",
+    "DockerNotes/Docker image and Docker container.md",
+    "DockerNotes/Docker client and Docker server.md",
+    "jib.md",
+    "DockerNotes/images/Eurekaserver.png",
+    "DockerNotes/images/how to make a eureka server.png",
+    "springboot notes/Performing input data validation.md",
+    "DockerNotes/How to read configurations.md",
+    "Database management system/Normalisation.md",
+    "springboot notes/Different types of variables we pass to the controller.md",
+    "DockerNotes/How to use profiling in springboot.md",
+    "DockerNotes/How to use mysql DB for microservices.md",
+    "DockerNotes/images/db connection.png",
+    "DockerNotes/Docker compose file.md",
+    "DockerNotes/How to use spring config server.md",
+    "DockerNotes/images/spring cloud dependencies.png",
+    "DockerNotes/Externalizing configuration.md",
+    "DockerNotes/Essential docker commands.md",
+    "Database management system",
+    "springboot notes",
+    "Rhino riding app",
+    "DockerNotes/images/hookdeck cli.png",
+    "DockerNotes/images/configure webhook.png",
+    "DockerNotes/images/web hooks.png",
+    "yaml and pom.xml for spring cloud bus/application.yaml",
+    "DockerNotes/other files/application 1.yaml",
+    "Untitled.md",
+    "DockerNotes/images/docker pull command 1.png",
+    "DockerNotes/images/docker pull command.png",
+    "DockerNotes/images/rabbit mq getting started.png",
+    "Docker image and Docker container.md",
+    "Untitled 2.canvas",
+    "Untitled 1.canvas",
+    "Untitled.canvas"
+  ]
+}
