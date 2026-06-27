@@ -116,6 +116,99 @@ now start the applications in the order
 
 configserver. -> eurekaserver ->  (needed applications) -> gateway 
 
+
+### How to make it support lowercase service Id
+
+in the applications.yml file of gateway server add 
+
+```
+lower-case-service-id: true
+```
+
+under the gateway server enabled 
+
+```
+spring:  
+  cloud:  
+    gateway:  
+      server:  
+        webflux:  
+          discovery:  
+            locator:  
+              enabled: true  
+              lower-case-service-id: true
+```
+
+so we can call 
+
+```
+http://localhost:8072/accounts/accountService/findUserByEmail?email=psaneesh99@gmail.com
+```
+
+instead of 
+
+```
+http://localhost:8072/ACCOUNTS/accountService/findUserByEmail?email=psaneesh99@gmail.com
+```
+
+
+The complete application.properties for gateway server
+
+
+```
+server:  
+  port: 8072  
+  
+spring:  
+  cloud:  
+    gateway:  
+      server:  
+        webflux:  
+          discovery:  
+            locator:  
+              enabled: true  
+  
+  config:  
+    import: "optional:configserver:http://localhost:8071/"  
+  application:  
+    name: gateway  
+  main:  
+    banner-mode: 'off'  
+management:  
+  endpoints:  
+    web:  
+      exposure:  
+        include: "*"  
+    #this is used to see the info which we added on the bottom, by adding this we can see  
+    # the info by accessing the url actuator/info  info:  
+    env:  
+      enabled: true  
+  
+  endpoint:  
+    gateway:  
+      access: unrestricted  
+  
+eureka:  
+  instance:  
+    prefer-ip-address: true  
+  
+  client:  
+    fetch-registry: true  
+    register-with-eureka: true  
+  
+    service-url:  
+      defaultZone: http://localhost:8070/eureka/  
+  
+info:  
+  app:  
+    name: "gateway"  
+    description: "gateway server description"  
+    version: "1.0.0"  
+  
+endpoint:  
+  shutdown:  
+    enabled: true
+```
 ### Why did Spring Cloud Gateway choose WebFlux?
 
 A gateway sits in front of every microservice:
@@ -148,3 +241,133 @@ Spring WebFlux + Netty
 ```
 
 not MVC.
+
+
+### Implementing custom routing using spring clound gateway 
+
+instead of calling  http://localhost:8072/ACCOUNTS/accountService/findUserByEmail?email=psaneesh99@gmail.com
+
+We can add a prefix to the url like https://localhost:8072/bookslots/accounts/accountService....   we can replace the ACCOUNTS with a custom url bookslots/accounts 
+
+inorder to create this we need to create a new bean in the main application of the edgeserver
+
+```
+@Bean  
+public RouteLocator routelocatorConfig(RouteLocatorBuilder builder) {  
+    return builder.routes().route(  
+          r -> r.path("/bookslots/accountService/**")  
+                .filters(f -> f.rewritePath("/bookslots/accountService/(?<segment>.*)", "/${segment}"))  
+                .uri("lb://ACCOUNTS")  
+    ).build();  
+}
+```
+
+we should put this inside the main applciation of the edge server after the main method
+
+what it will do is it will replace the ACCOUNTS with the path /booking/accountService
+
+so we can call the url like this
+
+```
+http://localhost:8072/bookslots/accountService/accountService/findUserByEmail?email=psaneesh99@gmail.com
+```
+
+### How to define multiple url like this
+
+just we need to add a new .route before the .build
+
+```
+@Bean  
+public RouteLocator routelocatorConfig(RouteLocatorBuilder builder) {  
+    return builder.routes().route(  
+          r -> r.path("/bookslots/accountService/**")  
+                .filters(f -> f.rewritePath("/bookslots/accountService/(?<segment>.*)", "/${segment}"))  
+                .uri("lb://ACCOUNTS")  
+    ).route(  
+          r -> r.path("/bookslots/bookingService/**")  
+                .filters(f -> f.rewritePath("/bookslots/bookingService/(?<segment>.*)", "/${segment}"))  
+                .uri("lb://BOOKING")  
+    ).build();  
+}
+```
+
+ explanation 
+
+```
+return builder.routes()
+```
+
+This is to indicate that we are going to define custom routes, and we are using builder pattern to pass each routes in to this and create a routeLocator object 
+and inside each route   each path is known as route predicate   
+```
+"/bookslots/accountService/**" 
+```
+this indicates that any url which starts with the pattern   /bookslots/accountService/   
+
+example 
+```
+/bookslots/accountService/findUser
+/bookslots/accountService/login
+/bookslots/accountService/test/abc
+```
+
+
+```
+.filters(...)
+```
+
+and . filters allows us to modify requests before forwarding it 
+
+Examples:
+
+- Add headers
+- Remove headers
+- Validate requests
+- Rewrite paths
+
+in our case we are rewring the path
+
+```
+.filters(f -> f.rewritePath("/bookslots/accountService/(?<segment>.*)", "/${segment}"))
+```
+
+here there are two parts 
+
+```
+"/bookslots/accountService/(?<segment>.*)"
+```
+
+and 
+
+```
+"/${segment}"
+```
+
+This is a kind of saving mechanism  we will save whatever coming after /bookslots/accountService. in to variable called segment  and convert it to  / segment.      so the segment value will be   /accountService/findUserByEmail?email=psaneesh99@gmail.com 
+
+and the last final part 
+
+```
+.uri("lb://ACCOUNTS")
+```
+
+it is a resource indicator , indicating to which resource we need to forward this request to , so the gateway server asks for the ACCOUNTS microservice to the eureka server and forwards the  request  /accountService/findUserByEmail?email=psaneesh99@gmail.com    to that 
+
+so the original url will look like this 
+
+```
+http://localhost:8081/accountService/findUserByEmail?email=psaneesh99@gmail.com
+```
+
+then we added gateway and made it to 
+
+
+```
+http://localhost:8072/ACCOUNTS/accountService/findUserByEmail?email=psaneesh99@gmail.com
+```
+
+and then we use route forwaring and made it to 
+
+```
+http://localhost:8072/bookslots/accountService/accountService/findUserByEmail?email=psaneesh99@gmail.com
+```

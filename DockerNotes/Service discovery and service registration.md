@@ -239,7 +239,7 @@ and in the microservice we need to add a new package client and add a new interf
 
 and we need to annotate that class with  
 ```
-@FeignClient("Booking")
+@FeignClient("booking")
 ```
 
 the name should be whatever name we gave in the eureka client information.  and inside that we need to write the abstract method of the url we need to hit , it should be exactly the same as we gave in the controller class of the other microservice
