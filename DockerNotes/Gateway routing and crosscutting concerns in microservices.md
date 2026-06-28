@@ -371,3 +371,58 @@ and then we use route forwaring and made it to
 ```
 http://localhost:8072/bookslots/accountService/accountService/findUserByEmail?email=psaneesh99@gmail.com
 ```
+
+
+## Sending the header inside the response
+
+we can  add a new filter which is responsible for sending the header inside the response 
+In the official springcloud gateway documentation go to gateway filter factory -> add response header gateway filter factory we can see the application.yaml based configuration there
+
+we can also add the same in the java configuration ( this is what recommended)
+
+```
+addResponseHeader("timestamp", LocalDateTime.now().toString()
+```
+
+inside the filters we can add this 
+
+```
+.filters(f -> f.rewritePath("/bookslots/accountService/(?<segment>.*)", "/${segment}").addResponseHeader("timestamp", LocalDateTime.now().toString()))
+```
+
+and we can see this data in the header section of the response  [[request header.png]]
+
+
+and same thing we can append to the request header and this value will be passed to every request. For that we just need to change this responseheader to requestheader
+
+```
+.addRequestHeader("requestheaderkey", "this is the request header value")
+```
+
+we can append this with the filter values 
+
+```
+.filters(f -> f.rewritePath("/bookslots/accountService/(?<segment>.*)", "/${segment}").addResponseHeader("timestamp", LocalDateTime.now().toString()).addRequestHeader("requestheaderkey", "this is the request header value"))
+```
+so the whole value becomes 
+
+```
+@Bean  
+public RouteLocator routelocatorConfig(RouteLocatorBuilder builder) {  
+    return builder.routes().route(  
+          r -> r.path("/bookslots/accountService/**")  
+                .filters(f -> f.rewritePath("/bookslots/accountService/(?<segment>.*)", "/${segment}").addResponseHeader("timestamp", LocalDateTime.now().toString()).addRequestHeader("requestheaderkey", "this is the request header value"))  
+                .uri("lb://ACCOUNTS")  
+    ).route(  
+          r -> r.path("/bookslots/bookingService/**")  
+                .filters(f -> f.rewritePath("/bookslots/bookingService/(?<segment>.*)", "/${segment}"))  
+                .uri("lb://BOOKING")  
+    ).build();  
+}
+```
+
+and we can add this value to the controller class 
+
+```
+public ResponseEntity<Response<UserDto>> findUserByEmail(@Email @RequestParam String email,@RequestHeader String requestheaderkey ) throws AccountException {
+```
