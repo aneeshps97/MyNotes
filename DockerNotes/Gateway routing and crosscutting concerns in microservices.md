@@ -426,3 +426,364 @@ and we can add this value to the controller class
 ```
 public ResponseEntity<Response<UserDto>> findUserByEmail(@Email @RequestParam String email,@RequestHeader String requestheaderkey ) throws AccountException {
 ```
+
+and we should give the same name as the one we gave in the gateway server 
+
+### How to add a unique transaction id using gateway server
+
+For this we need to create a new custom filter inside the gateway server , one which accepts a transactionid from the request and pass it to the controllers and in the response it should give the same in the response header , if there is no transaction id present in the request it should create a transaction id and pass it to the response. 
+
+we need to create a new package in the name of filters and then we need to create a class inside that which implements Global filter in the gateway server
+
+```
+     public class customFilter implements GlobalFilter
+```
+
+and we need to override the method filter in order to create a custom filter 
+
+```
+@Override  
+public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {  
+    return null;  
+}
+```
+
+This newly created filter class should be defined as a bean inorder for us to inject that class . we need to annotate that class with @Component annotation and we can also provide an exection order here by using @Order(1)
+
+```
+@Component  
+@Order(1)  
+public class customFilter implements GlobalFilter {
+```
+
+This order is the one which determines in which order the filters should work . 
+
+We can define more than one filters for the same project  for example 
+
+Suppose you have three filters:
+
+```
+@Component
+@Order(1)
+public class AuthenticationFilter implements GlobalFilter { }
+```
+
+```
+@Component
+@Order(2)
+public class LoggingFilter implements GlobalFilter { }
+```
+
+```
+@Component
+@Order(3)
+public class MetricsFilter implements GlobalFilter { }
+```
+
+when the request comes in 
+
+```
+Request
+   ↓
+AuthenticationFilter
+   ↓
+LoggingFilter
+   ↓
+MetricsFilter
+   ↓
+Controller
+```
+
+After the controller responds, the response travels back in **reverse order**:
+
+```
+Controller
+   ↑
+MetricsFilter
+   ↑
+LoggingFilter
+   ↑
+AuthenticationFilter
+```
+
+In the microservice architecture the gateway filters are the ones which is responsible for implementing crosscutting concerns such as logging security etc . These filters intercept the incoming requtests and apply the crosscutting concerns and forwards that to the controller and same way it intercepts the response from the controller and forwards that to the client. 
+
+### We can create a class which accepts the requests and create a transaction id and pass it to the controller class
+
+```
+public class RequestTraceFilter implements GlobalFilter {
+```
+
+and we need to annotate this class with @Order and @Component 
+
+  
+```
+@Component  
+@Order(1)  
+@Slf4j  
+public class RequestTraceFilter implements GlobalFilter {
+```
+
+and we need to create an another class FilterUtility to write the methods which sets and gets this transaction id 
+
+##### FilterUtility Class 
+
+```
+@Component  
+public class FilterUtility {  
+    public final String TRANSACTION_ID = "transactionId";  
+    public String getTransactionId(HttpHeaders requestHeaders){  
+        if(requestHeaders.get(TRANSACTION_ID) != null){  
+            //if in any request headers there is present transaction id then we will return that  
+            // otherwise we will just return null            return requestHeaders.get(TRANSACTION_ID).stream().findFirst().orElse(null);  
+        }else {  
+            return null;  
+        }  
+    }  
+  
+    public ServerWebExchange setTransactionId(ServerWebExchange exchange, String transactionId) {  
+        return exchange.mutate()  
+                .request(exchange.getRequest()  
+                        .mutate()  
+                        .header(TRANSACTION_ID, transactionId)  
+                        .build())  
+                .build();  
+    }  
+}
+```
+
+filter method in the RequestTraceFilter
+
+```
+@Override  
+public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {  
+    HttpHeaders requestHeaders = exchange.getRequest().getHeaders();  
+    if(isTransactionIdPresent(requestHeaders)){  
+        log.info("Transaction id ::{}", filterUtility.getTransactionId(requestHeaders));  
+    }else{  
+        String transactionId = generateTransactionId();  
+        exchange = filterUtility.setTransactionId(exchange,transactionId);  
+    }  
+    return chain.filter(exchange);  
+}
+```
+
+```
+private boolean isTransactionIdPresent(HttpHeaders requestHeaders){  
+    if(filterUtility.getTransactionId(requestHeaders)!=null){  
+        return true;  
+    }else {  
+        return false;  
+    }  
+}  
+private String generateTransactionId(){  
+    return UUID.randomUUID().toString();  
+}
+```
+
+
+we need to override this filter method like this 
+
+### Why the return type is Mono and there are two arguments ServerWebExchange and GatewayFilterChain  is because it is based on springs reactive stack 
+
+
+|Spring MVC (Servlet Stack)|Spring WebFlux (Reactive Stack)|
+|---|---|
+|Blocking I/O|Non-blocking I/O|
+|One thread per request|Few threads handle many requests|
+|Based on Servlet API|Based on Reactive Streams|
+|Uses `HttpServletRequest` and `HttpServletResponse`|Uses `ServerWebExchange`, `ServerHttpRequest`, `ServerHttpResponse`|
+|Suitable for traditional CRUD apps|Suitable for highly concurrent applications|
+Reactive programming is a programming model where data is processed **asynchronously**.
+
+#### What is the reactive web stack?
+
+It is the entire set of components that process an HTTP request without blocking.
+
+#### Main classes in reactive web stack 
+
+##### SeverWebExchange 
+(one argument in the filter method) it is the  central object which contains everything relates to http request
+
+ServerWebExchange
+    |
+    +-- Request
+    +-- Response
+    +-- Session
+    +-- Attributes
+    +-- Principal
+    +-- Locale
+
+###### ServerHttpRequest.  : 
+
+This one contains incoming http request
+
+```
+exchange.getRequest()
+```
+
+this will return the incoming request 
+
+examples 
+
+```
+String method =
+exchange.getRequest().getMethod().name();
+
+String path =
+exchange.getRequest().getPath().value();
+
+HttpHeaders headers =
+exchange.getRequest().getHeaders();
+```
+
+ServerHttpResponse : represents outgoing response 
+
+```
+exchange.getResponse()
+```
+
+```
+exchange.getResponse()
+        .setStatusCode(HttpStatus.OK);
+
+exchange.getResponse()
+        .getHeaders()
+        .add("transactionId", "12345");
+```
+
+##### WebFilter`
+
+Equivalent to a Servlet Filter in Spring MVC.
+
+Runs before and/or after request handling.
+
+###### Mono and Flux 
+in a web flux mono represents zero or one    and flux represents zero or many   values
+
+#### GatewayFilterChain chain. 
+
+This one represents the remaining filter which is needed to be executed after executing the current chain 
+
+imagine our gateway server has several filter 
+
+```
+Authentication Filter
+        ↓
+Transaction ID Filter
+        ↓
+Logging Filter
+        ↓
+Rate Limiting Filter
+        ↓
+Routing Filter
+        ↓
+Target Microservice
+```
+
+when the request reaches TransactionId filter it will know about every filter comes after it and it will automatically apply other filters 
+
+###### Why is it passed as a parameter?
+
+Spring creates the entire filter chain for each request and passes the appropriate `GatewayFilterChain` into each filter. This lets each filter decide whether to:
+
+- Continue processing the request.
+- Modify the request or response before continuing.
+- Stop the request and return a response immediately.
+
+if we don't call the chain.filter(exchange) the execution stops there
+
+
+so in the method 
+
+```
+public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) 
+```
+
+Think of `Mono<Void>` as:
+
+"I am returning a promise that this operation will complete later, but there won't be any value."
+
+and ServerWebExchange contains all the necessary components in an http request such as request response headers etc and GatewayFilterChain represents the next filters which is needed to be applied
+
+#### How to log this in the controller  and pass this value to the next controller when we call an another microservice using feignclient
+
+we can get the transaction id inside the controller by adding that to the method parameters
+
+```
+@RequestHeader String transactionId
+```
+
+```
+public ResponseEntity<Response<List<BookingDTO>>> getBookingByUserForSpaceInAccountService(@RequestParam int userId, @RequestParam int spaceId, @RequestHeader String transactionId) {  
+    log.info("Getting transcationId::{}", transactionId);
+```
+
+notice this variable name should be same as the name we set to the header variable in the filter method, in *filterUtility.setTransactionId(exchange,transactionId);.    this method we add this transactionId variable name. 
+
+otherwise we can give it like this 
+
+```
+@RequestHeader("transactionId") String transactionId
+```
+
+#### How to pass this to the next microservice using feign client 
+
+For that we need to make the same changes in the controller method of the other microservice 
+
+in the other microservice we need to make this same change to accept the header in the controller method
+
+```
+@GetMapping("booking/by-user")  
+public ResponseEntity<Response<List<BookingDTO>>> getBookingByUserForSpace(  
+        @RequestParam int userId,  
+        @RequestParam int spaceId,  
+        @RequestHeader("transactionId")  String transactionId  
+) throws Exception {  
+    logger.info("getting transaction id ::{}", transactionId);
+```
+
+in the feign client also we need to make the same change 
+
+```
+@FeignClient("booking")  
+public interface BookingFeignClient {  
+    @GetMapping("bookingService/booking/by-user")  
+    public ResponseEntity<Response<List<BookingDTO>>> getBookingByUserForSpace(  
+            @RequestParam int userId,  
+            @RequestParam int spaceId,  
+            @RequestHeader("transactionId") String transactionId  
+    );  
+}
+```
+
+and we should call this like this
+
+```
+@Service  
+@AllArgsConstructor  
+public class ClientServiceImpl implements IClientService{  
+    private BookingFeignClient bookingFeignClient;  
+    @Override  
+    public Response<List<BookingDTO>> getBookingByUserForSpace(int userId, int spaceId, String transactionId) {  
+        return bookingFeignClient.getBookingByUserForSpace(userId,spaceId, transactionId).getBody();  
+    }  
+}
+```
+
+```
+response = clientService.getBookingByUserForSpace(userId, spaceId, transactionId);
+```
+
+in the logs we can see 
+
+```
+controller.ClientController            : Getting transcationId::f744c323-e14e-4950-bd33-5b446043eba4
+controller.BookingController       : getting transaction id ::f744c323-e14e-4950-bd33-5b446043eba4
+```
+
+
+and we can also pass the same transaction id in the postman along with the request and this will be passed through the services like this , so the tracing of logs will become easier 
+
+
+How to return the same transaction id in the repose 

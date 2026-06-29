@@ -78,7 +78,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 282.5024719238281
+    "width": 282.5024719238281,
+    "collapsed": true
   },
   "right": {
     "id": "5655ea1617fa689c",
@@ -184,7 +185,7 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "6e3f1e92cdd96572",
+  "active": "0f58969e8db1e4dc",
   "lastOpenFiles": [
     "DockerNotes/images/request header.png",
     "DockerNotes/Service discovery and service registration.md",
