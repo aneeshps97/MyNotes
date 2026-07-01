@@ -786,4 +786,95 @@ controller.BookingController       : getting transaction id ::f744c323-e14e-4950
 and we can also pass the same transaction id in the postman along with the request and this will be passed through the services like this , so the tracing of logs will become easier 
 
 
-How to return the same transaction id in the repose 
+#### How to return the same transaction id in the repose 
+
+for that we need to define a new class ResponseTranceFilter and we can define a bean of type GlobalFilter inside that 
+
+
+```
+@Configuration  
+public class ResponseTraceFilter{
+```
+
+```
+@Bean  
+public GlobalFilter postGlobalFilter(){
+```
+
+and we can use lambda expressions to rewrite the same code which we wrote earlier 
+
+```
+@Bean  
+public GlobalFilter postGlobalFilter(){  
+    return((exchange, chain) ->  {  
+        return chain.filter(exchange).then(Mono.fromRunnable(() -> {  
+            HttpHeaders requestHeaders = exchange.getRequest().getHeaders();  
+            String transactionId = filterUtility.getTransactionId(requestHeaders);  
+            log.debug("updated the transaction Id to the outbound headers {}",transactionId);  
+            exchange.getResponse().getHeaders().add(filterUtility.TRANSACTION_ID,transactionId);  
+        }));  
+    });  
+}
+```
+
+
+The code before `chain.filter()` runs **before** the request is forwarded.
+for a post filter you want  return chain.filter(exchange).then(...);
+execution order
+
+```
+Incoming Request
+       │
+       ▼
+Your filter starts
+       │
+       ▼
+chain.filter(exchange)
+       │
+       ▼
+Other filters
+       │
+       ▼
+Target microservice
+       │
+       ▼
+Response comes back
+       │
+       ▼
+.then(...) executes
+       │
+       ▼
+Response sent to client
+```
+
+
+so in a response filter after executing all the data it will forward the request to the reponse 
+
+
+
+so the entire class becomes 
+
+```
+@Configuration  
+@Slf4j  
+public class ResponseTraceFilter{  
+    @Autowired  
+    FilterUtility filterUtility;  
+    @Bean  
+    public GlobalFilter postGlobalFilter(){  
+        return((exchange, chain) ->  {  
+            return chain.filter(exchange).then(Mono.fromRunnable(() -> {  
+                HttpHeaders requestHeaders = exchange.getRequest().getHeaders();  
+                String transactionId = filterUtility.getTransactionId(requestHeaders);  
+                log.debug("updated the transaction Id to the outbound headers {}",transactionId);  
+                exchange.getResponse().getHeaders().add(filterUtility.TRANSACTION_ID,transactionId);  
+            }));  
+        });  
+    }  
+}
+```
+
+
+## Making changes in the microservices to support docker  
+
+W
