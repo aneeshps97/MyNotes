@@ -208,6 +208,14 @@ and the commad which we use to create an image using google jib is
 mvn compile jib:dockerBuild 
 ```
 
+we need to build that using 
+
+```
+mvn compile jib:dockerBuild -Djib.from.platforms=linux/arm64
+```
+
+otherwise the docker compse will not work properly
+
 and then we can run this using the same way as shown above. 
 
 

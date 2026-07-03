@@ -877,4 +877,332 @@ public class ResponseTraceFilter{
 
 ## Making changes in the microservices to support docker  
 
-W
+```
+we need to build each of them using 
+mvn compile jib:dockerBuild -Djib.from.platforms=linux/arm64
+```
+
+We need to make the health related change in all the microservices in that way we can make sure that the gateway server is only starting if the other microservices are started successfully. 
+
+under management tab in the application.properties we should give 
+
+```
+  health:  
+    readiness-state:  
+      enabled: true  
+    liveness-state:  
+      enabled: true
+```
+
+and under this same tab we need to give this is to enable the actuator urls. By using include: * we are telling the springboot to enable all the actuator urls
+
+
+```
+endpoints:  
+  web:  
+    exposure:  
+      include: "*"
+```
+
+
+and we also need to add 
+
+```
+endpoint:  
+  health:  
+    probes:  
+      enabled: true
+```
+
+This is to enable all the liveness and readiness urls in the actuator , this we can use later to grep the readiness and liveness state and use to make sure that our gateway server is starting only after successful starting of the other microservices.  All these should come under ==management==
+
+And after all these changes we need to make the changes in the docker compose file 
+
+we need to create a new service in the docker compose file 
+
+```
+gatewayserver:  
+  image: gateway:0.0.1-SNAPSHOT  
+  container_name: gateway-ms  
+  ports:  
+    - "8072:8072"  
+  environment:  
+    SPRING_APPLICATION_NAME: "gatewayserver"  
+  extends:  
+    file: common-config.yml  
+    service: microservice-eurekaserver-config
+```
+
+and we need to add the health related properties for other services 
+
+```
+healthcheck:  
+  test: "curl --fail --silent localhost:8071/actuator/health/readiness|grep UP || exit 1"  
+  interval: 10s  
+  timeout: 5s  
+  retries: 10  
+  start_period: 10s
+```
+
+we need to add this for all the other microservices which the gateway server is depend on 
+
+and then we need to add 
+
+```
+depends_on:  
+  accounts:  
+    condition: service_healthy  
+  booking:  
+    condition: service_healthy  
+  space:  
+    condition: service_healthy
+```
+
+to the gatewayserver service 
+
+and we need to make the services up using the docker compse up command
+
+The complete compose file 
+
+```
+services:  
+  
+  gatewayserver:  
+    image: gateway:0.0.1-SNAPSHOT  
+    container_name: gateway-ms  
+    ports:  
+      - "8072:8072"  
+    environment:  
+      SPRING_APPLICATION_NAME: "gatewayserver"  
+    extends:  
+      file: common-config.yml  
+      service: microservice-eurekaserver-config  
+  
+    depends_on:  
+      accounts:  
+        condition: service_healthy  
+      booking:  
+        condition: service_healthy  
+      space:  
+        condition: service_healthy  
+  
+  
+  
+  configserver:  
+    image: springcloud:0.0.1-SNAPSHOT  
+    container_name: configserver-ms  
+    ports:  
+      - "8071:8071"  
+    extends:  
+      file: common-config.yml  
+      service: microservice-base-config  
+  
+    healthcheck:  
+      test: "curl --fail --silent localhost:8071/actuator/health/readiness|grep UP || exit 1"  
+      interval: 10s  
+      timeout: 5s  
+      retries: 10  
+      start_period: 10s  
+  
+  
+  eurekaserver:  
+    image: eurekaserver:0.0.1-SNAPSHOT  
+    container_name: eurekaserver-ms  
+    ports:  
+      - "8070:8070"  
+    extends:  
+      file: common-config.yml  
+      service: microservice-configserver-config  
+  
+    environment:  
+      SPRING_APPLICATION_NAME: "eurekaserver"  
+  
+    healthcheck:  
+      test: "curl --fail --silent localhost:8070/actuator/health/readiness|grep UP || exit 1"  
+      interval: 10s  
+      timeout: 5s  
+      retries: 10  
+      start_period: 10s  
+  
+  
+  accounts:  
+    image: accountservice:0.0.1-SNAPSHOT  
+    container_name: accounts-ms  
+    ports:  
+      - "8081:8081"  
+    extends:  
+      file: common-config.yml  
+      service: microservice-eurekaserver-config  
+  
+    environment:  
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8071/"  
+      SPRING_PROFILES_ACTIVE: default  
+      SPRING_APPLICATION_NAME: accounts  
+  
+    healthcheck:  
+      test: "curl --fail --silent localhost:8081/accountService/actuator/health/readiness|grep UP || exit 1"  
+      interval: 10s  
+      timeout: 5s  
+      retries: 10  
+      start_period: 10s  
+  
+  
+  booking:  
+    image: bookingservice:0.0.1-SNAPSHOT  
+    container_name: booking-ms  
+    ports:  
+      - "8083:8083"  
+    extends:  
+      file: common-config.yml  
+      service: microservice-eurekaserver-config  
+  
+    environment:  
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8071/"  
+      SPRING_PROFILES_ACTIVE: default  
+      SPRING_APPLICATION_NAME: booking  
+  
+    healthcheck:  
+      test: "curl --fail --silent localhost:8083/bookingService/actuator/health/readiness|grep UP || exit 1"  
+      interval: 10s  
+      timeout: 5s  
+      retries: 10  
+      start_period: 10s  
+  
+  space:  
+    image: spaceservice:0.0.1-SNAPSHOT  
+    container_name: space-ms  
+    ports:  
+      - "8085:8085"  
+    extends:  
+      file: common-config.yml  
+      service: microservice-eurekaserver-config  
+  
+    environment:  
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8071/"  
+      SPRING_PROFILES_ACTIVE: default  
+      SPRING_APPLICATION_NAME: space  
+  
+    healthcheck:  
+      test: "curl --fail --silent localhost:8085/spaceService/actuator/health/readiness|grep UP || exit 1"  
+      interval: 10s  
+      timeout: 5s  
+      retries: 10  
+      start_period: 10s  
+  
+  
+networks:  
+  abc:  
+    driver: "bridge"
+```
+
+
+The complete commonConfig file 
+
+```
+services:  
+  network-deploy-services:  
+    networks:  
+      - abc  
+  
+  
+  microservice-base-config:  
+    extends:  
+      service: network-deploy-services  
+    environment:  
+      SPRING_PROFILES_ACTIVE: default  
+      SPRING_RABBITMQ_HOST: rabbit  
+    deploy:  
+      resources:  
+        limits:  
+          memory: 700m  
+  
+  
+  microservice-configserver-config:  
+    extends:  
+      service: microservice-base-config  
+    depends_on:  
+      configserver:  
+        condition: service_healthy  
+    environment:  
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8071"  
+  
+  
+  microservice-eurekaserver-config:  
+    extends:  
+      service: microservice-configserver-config  
+    depends_on:  
+      eurekaserver:  
+        condition: service_healthy  
+    environment:  
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: "http://eurekaserver:8070/eureka"
+```
+
+
+sample application.properties file in a microservice 
+
+```
+server:  
+  address: 0.0.0.0  
+  servlet:  
+    context-path: /accountService  
+  port: '8081'  
+spring:  
+  config:  
+    import: "optional:configserver:http://localhost:8071/"  
+  datasource:  
+    driver-class-name: com.mysql.cj.jdbc.Driver  
+    username: root  
+    #for docker   jdbc:mysql://host.docker.internal:3306/accountservicedb  
+    # for local   jdbc:mysql://localhost:3306/accountservicedb    url: jdbc:mysql://host.docker.internal:3306/accountservicedb  
+    #url: jdbc:mysql://localhost:3306/accountservicedb  
+    password: Psaneesh010@  
+  application:  
+    name: accounts  
+  main:  
+    banner-mode: 'off'  
+management:  
+  health:  
+    readiness-state:  
+      enabled: true  
+    liveness-state:  
+      enabled: true  
+  
+  endpoints:  
+    web:  
+      exposure:  
+        include: "*"  
+   #this is used to see the info which we added on the bottom, by adding this we can see  
+   # the info by accessing the url actuator/info  info:  
+    env:  
+      enabled: true  
+  
+  endpoint:  
+    health:  
+      probes:  
+        enabled: true  
+    shutdown:  
+      access: unrestricted  
+  
+eureka:  
+  instance:  
+    prefer-ip-address: true  
+  
+  client:  
+    fetch-registry: true  
+    register-with-eureka: true  
+  
+    service-url:  
+      defaultZone: http://localhost:8070/eureka/  
+  
+info:  
+  app:  
+    name: "accounts"  
+    description: "Accounts description"  
+    version: "1.0.0"  
+  
+endpoint:  
+  shutdown:  
+    enabled: true
+```
+
+

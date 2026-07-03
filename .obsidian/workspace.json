@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "d107b0eb349a590a",
+        "id": "1f7186c55d0c9c86",
         "type": "tabs",
         "children": [
           {
-            "id": "0f58969e8db1e4dc",
+            "id": "336e3c12d5c6086c",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 282.5024719238281,
-    "collapsed": true
+    "width": 282.5024719238281
   },
   "right": {
     "id": "5655ea1617fa689c",
@@ -185,13 +184,16 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "0f58969e8db1e4dc",
+  "active": "336e3c12d5c6086c",
   "lastOpenFiles": [
+    "DockerNotes/Docker client and Docker server.md",
+    "DockerNotes/Docker image and Docker container.md",
+    "2026-07-02.md",
+    "jib.md",
+    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
     "DockerNotes/images/request header.png",
     "DockerNotes/Service discovery and service registration.md",
-    "jib.md",
     "DockerNotes/this is a test for obsidian git.md",
-    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
     "DockerNotes/How to use spring config server.md",
     "DockerNotes/images/config client explore.png",
     "DockerNotes/images/config folder structure.png",
@@ -207,7 +209,6 @@
     "DockerNotes/images/Spring security filters.png",
     "DockerNotes/How to use mysql DB for microservices.md",
     "DockerNotes/Essential docker commands.md",
-    "DockerNotes/Docker image and Docker container.md",
     "DockerNotes/Docker compose file.md",
     "springboot authorization and authentication",
     "DockerNotes/index.base",
@@ -223,7 +224,6 @@
     "Rhino riding app/Rhino_Project_Workflow.md",
     "Rhino riding app/Entity relationship.md",
     "Rhino riding app/Database design.md",
-    "DockerNotes/Docker client and Docker server.md",
     "DockerNotes/images/Eurekaserver.png",
     "DockerNotes/images/how to make a eureka server.png",
     "springboot notes/Performing input data validation.md",
@@ -231,7 +231,6 @@
     "Database management system",
     "springboot notes",
     "Rhino riding app",
-    "DockerNotes/images/hookdeck cli.png",
     "yaml and pom.xml for spring cloud bus/application.yaml",
     "Untitled 2.canvas",
     "Untitled 1.canvas",
