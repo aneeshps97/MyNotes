@@ -8,17 +8,17 @@
         "type": "tabs",
         "children": [
           {
-            "id": "336e3c12d5c6086c",
+            "id": "c1eb3426616d156d",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
+                "file": "DockerNotes/Making microservices Resilient.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Gateway routing and crosscutting concerns in microservices"
+              "title": "Making microservices Resilient"
             }
           }
         ]
@@ -184,13 +184,18 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "336e3c12d5c6086c",
+  "active": "c1eb3426616d156d",
   "lastOpenFiles": [
+    "DockerNotes/images/circuit breaker.png",
+    "DockerNotes/Making microservices Resilient.md",
+    "DockerNotes/images/microservices circuit breaker.png",
+    "What is functional programing.md",
+    "Untitled.md",
+    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
     "DockerNotes/Docker client and Docker server.md",
     "DockerNotes/Docker image and Docker container.md",
     "2026-07-02.md",
     "jib.md",
-    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
     "DockerNotes/images/request header.png",
     "DockerNotes/Service discovery and service registration.md",
     "DockerNotes/this is a test for obsidian git.md",
@@ -221,13 +226,7 @@
     "Rhino riding app/Defining basic features.md",
     "Rhino riding app/Design plan.md",
     "Rhino riding app/updated code flow.md",
-    "Rhino riding app/Rhino_Project_Workflow.md",
-    "Rhino riding app/Entity relationship.md",
-    "Rhino riding app/Database design.md",
     "DockerNotes/images/Eurekaserver.png",
-    "DockerNotes/images/how to make a eureka server.png",
-    "springboot notes/Performing input data validation.md",
-    "DockerNotes/images/db connection.png",
     "Database management system",
     "springboot notes",
     "Rhino riding app",
