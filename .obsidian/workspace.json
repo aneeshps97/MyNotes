@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 282.5024719238281
+    "width": 271.5024719238281
   },
   "right": {
     "id": "5655ea1617fa689c",
@@ -184,14 +184,15 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "c1eb3426616d156d",
+  "active": "6e3f1e92cdd96572",
   "lastOpenFiles": [
-    "DockerNotes/images/circuit breaker.png",
+    "DockerNotes/images/retry in gateway.png",
+    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
     "DockerNotes/Making microservices Resilient.md",
+    "DockerNotes/images/circuit breaker.png",
     "DockerNotes/images/microservices circuit breaker.png",
     "What is functional programing.md",
     "Untitled.md",
-    "DockerNotes/Gateway routing and crosscutting concerns in microservices.md",
     "DockerNotes/Docker client and Docker server.md",
     "DockerNotes/Docker image and Docker container.md",
     "2026-07-02.md",
