@@ -1,3 +1,10 @@
+```
+all the codes related to this is committed here
+https://github.com/aneeshps97/udemy-microservice-section10.git
+	in the application.properties we are using the mysql url of docker to test in local change that
+```
+
+
 Resilience means something which is capable of handling tough times and bouncing back . 
 
 How do we avoid cascading failures : If one of our services slow or failing how it affect others . 
@@ -492,3 +499,303 @@ resilience4j:
 ```
 
 in the application.properties of the client application.
+
+also we can add retryExceptions which indicates for which exceptions retry should happen
+
+instead of ignoreExceptions we need to add retryExceptions
+
+```
+retryExceptions:  
+    - java.lang.NullPointerException
+```
+
+
+In the gateway server also we can do the same thing so we need to add setExceptions after retry
+
+```
+retryConfig.setRetries(3).setExceptions(TimeoutException.class)
+```
+
+if we give both the priority will be for the microservice application not the gateway so if we have retryExceptions configured it will take that.
+
+
+# Rate limiter pattern
+
+A rate limiter patter is a design pattern that helps control and limit the rate of incoming requests to a server or API It is used to prevent abuse protect system resources and ensure fair usage of the service. 
+
+Spring cloud ratelimiter official documentation.
+[https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/gatewayfilter-factories/requestratelimiter-factory.html](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/gatewayfilter-factories/requestratelimiter-factory.html)
+
+The RateLimiter Filter use [Bucket4j](https://bucket4j.com/) to determine if the current request is allowed to proceed. If it is not, a status of `HTTP 429 - Too Many Requests` (by default) is returned.
+
+## The Redis `RateLimiter`
+
+The Redis implementation is based on work done at [Stripe](https://stripe.com/blog/rate-limiters). It requires the use of the `spring-boot-starter-data-redis-reactive` Spring Boot starter.
+
+The algorithm used is the [Token Bucket Algorithm](https://en.wikipedia.org/wiki/Token_bucket).
+
+The `redis-rate-limiter.replenishRate` property defines how many requests per second to allow (without any dropped requests). This is the rate at which the token bucket is filled.
+
+The `redis-rate-limiter.burstCapacity` property is the maximum number of requests a user is allowed in a single second (without any dropped requests). This is the number of tokens the token bucket can hold. Setting this value to zero blocks all requests.
+
+The `redis-rate-limiter.requestedTokens` property is how many tokens a request costs. This is the number of tokens taken from the bucket for each request and defaults to `1`.
+
+A steady rate is accomplished by setting the same value in `replenishRate` and `burstCapacity`. Temporary bursts can be allowed by setting `burstCapacity` higher than `replenishRate`.
+
+For example, setting `replenishRate=1`, `requestedTokens=60`, and `burstCapacity=60` results in a limit of `1 request/min`
+
+# Implementing Redis Ratelimiter in Gateway server
+
+We need to add dependency in the gateway server
+
+```
+<dependency>  
+    <groupId>org.springframework.boot</groupId>  
+    <artifactId>spring-boot-starter-data-redis-reactive</artifactId>  
+</dependency>
+```
+
+and in the main application of the gateway server we need to create two beans
+
+```
+@Bean  
+public RedisRateLimiter redisRateLimiter() {  
+    return new RedisRateLimiter(1,1,1);  
+}
+```
+
+This initialises the redis ratelimiter with   `replenishRate=1`, `requestedTokens=1`, and `burstCapacity=1`   
+
+```
+@Bean  
+KeyResolver userKeyResolver() {  
+    return exchange -> Mono.justOrEmpty(exchange.getRequest().getHeaders().getFirst("USER")).defaultIfEmpty("anonymous");  
+}
+```
+
+`KeyResolver` in **Spring Cloud Gateway** is used by the **RequestRateLimiter** filter to decide **which key should be used to track rate limits**.
+
+what is an exchange ?
+exchange is the complete HTTP request and response context. Think of it as a box containing everything about the current request.
+
+```
+                ServerWebExchange
+          +----------------------------+
+          |                            |
+Request -->  HTTP Request              |
+          |                            |
+          |  HTTP Response             | --> Response
+          |                            |
+          |  Session                   |
+          |                            |
+          |  Attributes                |
+          |                            |
+          |  Cookies                   |
+          |                            |
+          +----------------------------+
+```
+
+here if there is no head with USER it will return the value of that header otherwise it will return anonymous. 
+
+And inside the filter we can add this ratelimiter filter 
+
+```
+.requestRateLimiter(config -> config.setRateLimiter(redisRateLimiter()).setKeyResolver(userKeyResolver())))
+```
+
+For this we need to start a redis server using docker , for that go to the terminal and start a redis server using docker
+
+```
+docker run -p 6379:6379 --name myredis -d redis
+```
+
+And then we need to give the redis configuration to the gateway server application.yaml
+
+```
+spring:  
+  data:  
+    redis:  
+      connection-timeout: 2s  
+      host: localhost  
+      port: 6379  
+      timeout: 1s
+```
+
+
+## To load test this we need to install apache benchmark 
+
+in our case it was already installed, to test whether it is already installed or not run command ab -V
+
+```
+ab -V                                                                                   
+
+This is ApacheBench, Version 2.3 <$Revision: 1923142 $>
+
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+
+Licensed to The Apache Software Foundation, http://www.apache.org/
+```
+
+otherwise we can install it using homebrew
+
+### how to load test :
+
+run command  
+```
+ab -n 10 -c 2 -v 3 http://localhost:8072/bookslots/bookingService/bookingService/buildVersionForLoadTest
+```
+
+here 
+-n indicates total number of requests
+-c indicates how many concurrent requests it should send 
+-v 3 indicates verbose3 which shows all the relevant information about the requests
+
+```
+LOG: Response code = 200
+LOG: header received:
+HTTP/1.0 429 Too Many Requests
+X-RateLimit-Remaining: 0
+X-RateLimit-Requested-Tokens: 1
+X-RateLimit-Burst-Capacity: 1
+X-RateLimit-Replenish-Rate: 1
+content-length: 0
+
+  
+
+WARNING: Response code not 2xx (429)
+LOG: header received:
+HTTP/1.0 429 Too Many Requests
+X-RateLimit-Remaining: 0
+X-RateLimit-Requested-Tokens: 1
+X-RateLimit-Burst-Capacity: 1
+X-RateLimit-Replenish-Rate: 1
+content-length: 0
+```
+
+Here only one request will pass all other requests will fail with 429 too many requests
+
+also we can see the ratelimiter properties here 
+
+```
+LOG: header received:
+HTTP/1.1 200 OK
+X-RateLimit-Remaining: 0
+X-RateLimit-Requested-Tokens: 1
+X-RateLimit-Burst-Capacity: 1
+X-RateLimit-Replenish-Rate: 1
+Content-Type: text/plain;charset=UTF-8
+Content-Length: 23
+Date: Thu, 16 Jul 2026 23:35:52 GMT
+transactionId: 802fc379-0fc6-48dc-a434-819cc281e7da
+connection: close
+```
+
+if we give the configuration like this 
+
+```
+new RedisRateLimiter(3,3,1);  
+```
+
+it will allow us to send 3 requests per second
+
+## Implementing ratelimiter pattern in individual microservices
+
+Inorder to implement ratelimiter in individual microservices we need to add @RateLimiter annotation on top of individual apis.
+
+```
+@RateLimiter(name="<method name>")  
+```
+
+```
+@RateLimiter(name="rateLimiterTestForIndividualMicroservices")  
+@GetMapping("/ratelimiterTest")  
+public ResponseEntity<String> rateLimiterTestForIndividualMicroservices(){  
+    return ResponseEntity.ok("ratelimiterTest");  
+}
+```
+
+Also we need to add resilience4j.ratelimiter configuration in the individual microservices application.yaml
+
+```
+resilience4j.ratelimiter:  
+  configs:  
+    default:  
+      timeoutDuration: 1s  
+      limitRefreshPeriod: 5s  
+      limitForPeriod: 1
+```
+
+we can change this configuration for each methods for that we need to add 
+
+```
+resilience4j.ratelimiter:  
+  instances:  
+    rateLimiterTestForIndividualMicroservices2:  
+      timeoutDuration: 1s  
+      limitRefreshPeriod: 5s  
+      limitForPeriod: 1
+```
+
+if we define it like this this configuration will be limited to that method only
+
+Also we can create a fallback for this too 
+
+### How to create a fallback for the ratelimiter
+
+For that we need to create a fallback method and mention that in the @RateLimiter annotation
+
+```
+public ResponseEntity<String> rateLimiterTestForIndividualMicroservicesFallback(Throwable throwable){  
+    return ResponseEntity.ok("ratelimiterTestFallback");  
+}
+```
+
+```
+@RateLimiter(name="rateLimiterTestForIndividualMicroservices", fallbackMethod = "rateLimiterTestForIndividualMicroservicesFallback")  
+@GetMapping("/ratelimiterTest")  
+public ResponseEntity<String> rateLimiterTestForIndividualMicroservices(){  
+    return ResponseEntity.ok("ratelimiterTest");  
+}
+```
+
+# BulkHead pattern
+
+Bulk head pattern helps us to allocate the resources which can be used for specific services so that resource exhaustion can be reduced
+[[bulkhead pattern.png]]
+
+### Implementing Resilience pattern using docker container
+
+1. we need to create docker images of all the microservices releated to this.
+2. we need to add a new redis service portion in the docker compose
+
+```
+redis:  
+  image: redis  
+  ports:  
+    - "6379:6379"  
+  healthcheck:  
+    test: ["CMD-SHELL","redis-cli ping|grep PONG"]  
+    timeout: 10s  
+    retries: 10  
+  extends:  
+    file: common-config.yml  
+    service: network-deploy-services
+```
+
+and in the gateway server service part we need to add 
+
+```
+depends_on:
+	redis:  
+	  condition: service_healthy
+```
+
+and on the same gatewayserver environment variables we need to add
+
+```
+SPRING_DATA_REDIS_HOST: redis  
+SPRING_DATA_REDIS_PORT: 6379  
+SPRING_DATA_REDIS_TIMEOUT: 1S
+```
+
+and using docker compose we can make all the services up 
